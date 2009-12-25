@@ -28,8 +28,12 @@ module DeviseHelper
   #
   #   = sign_up_link
   #   = sign_up_link :user
-  #   = sign_up_link "Sign up now", :user, :js => true
+  #   = sign_up_link :user, :js => true
+  #   = sign_up_link :user, "Sign up now", :js => true
   #   = sign_up_link do
+  #     = image_tag('fancy_sign_up.png')
+  #   end
+  #   = sign_up_link :user, :js => true do
   #     = image_tag('fancy_sign_up.png')
   #   end
   #
@@ -47,8 +51,12 @@ module DeviseHelper
   #
   #   = sign_in_link
   #   = sign_in_link :user
-  #   = sign_in_link "Sign in now", :user, :js => true
+  #   = sign_in_link :user, :js => true
+  #   = sign_in_link :user, "Sign in now", :js => true
   #   = sign_in_link do
+  #     = image_tag('fancy_sign_in.png')
+  #   end
+  #   = sign_in_link :user, :js => true do
   #     = image_tag('fancy_sign_in.png')
   #   end
   #
@@ -62,8 +70,12 @@ module DeviseHelper
   #
   #   = sign_out_link
   #   = sign_out_link :user
-  #   = sign_out_link "Sign in now", :user, :js => true
+  #   = sign_out_link :user, :js => true
+  #   = sign_out_link :user, "Sign in now", :js => true
   #   = sign_out_link do
+  #     = image_tag('fancy_sign_out.png')
+  #   end
+  #   = sign_out_link :user, :js => true do
   #     = image_tag('fancy_sign_out.png')
   #   end
   #
@@ -73,6 +85,8 @@ module DeviseHelper
 
   # Helper: Auto-detect sign in/out link.
   #
+  # == Examples:
+  #
   #   = sign_in_out_link
   #   = sign_in_out_link :user
   #   = sign_in_out_link :user, :js => true
@@ -81,8 +95,11 @@ module DeviseHelper
   #       helpers if explicit label/content is needed - easier.
   #
   def sign_in_out_link(*args)
+    unless scope = (args.first if args.first.is_a?(Symbol)) || Warden::Manager.default_scope
+      raise "No scope could be detected. Ensure that you got a authenticatable Devise model in you app."
+    end
     args.reject! { |arg| arg.is_a?(String) } # Ignore strings.
-    signed_in?(detect_devise_scope(*args)) ? sign_out_link(*args) : sign_in_link(*args)
+    signed_in?(scope) ? sign_out_link(*args) : sign_in_link(*args)
   end
 
   # Re-usable helper to generate Devise view link helpers according to
@@ -93,19 +110,23 @@ module DeviseHelper
   #
   #   = devise_link_to :sign_in
   #   = devise_link_to :sign_in, :user
-  #   = devise_link_to "Sign in now", :sign_in, :user, :js => true
-  #   = devise_link_to :sign_in, :user do
+  #   = devise_link_to :sign_in, :user, :js => true
+  #   = devise_link_to :sign_in, :user, "Sign in now", :js => true
+  #   = devise_link_to :sign_in do
+  #     = image_tag('example.png')
+  #   end
+  #   = devise_link_to :sign_in, :user, :js => true do
   #     = image_tag('example.png')
   #   end
   #
-  def devise_link_to(*args, &block)
+  def devise_link_to(action, *args, &block)
     options = args.extract_options!
-    unless action = args.detect { |arg| arg.is_a?(Symbol) && DEVISE_ACTIONS.keys.include?(arg) }
-      raise "No action specified. Valid Devise actions: :sign_in, :sign_out, :sign_up"
+    unless scope = (args.shift if args.first.is_a?(Symbol)) || Warden::Manager.default_scope
+      raise "No scope could be detected. Ensure that you got a authenticatable Devise model in you app."
     end
-    scope = detect_devise_scope(*args)
 
-    label_or_content = block_given? ? capture(&block) : args.detect { |arg| arg.is_a?(String) }
+    label_or_content = args.shift
+    label_or_content ||= capture(&block) if block_given?
     label_or_content ||= devise_translate(action, scope)
 
     route = DEVISE_ACTIONS[action].gsub('{{scope}}', scope.to_s)
@@ -115,16 +136,6 @@ module DeviseHelper
   end
 
   protected
-
-    # Helper method to detect a valid Devise scope based on specified
-    # value, or fallback on the default.
-    #
-    def detect_devise_scope(*args)
-      unless scope = args.detect { |arg| arg.is_a?(Symbol) && !DEVISE_ACTIONS.keys.include?(arg) } || Warden::Manager.default_scope
-        raise "No scope could be detected. Ensure that you got a authenticatable Devise model in you app."
-      end
-      scope
-    end
 
     # Helper method to lookup labels based on specified Devise scope,
     # and type of action.
