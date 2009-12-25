@@ -1,22 +1,8 @@
 require 'devise/strategies/authenticatable'
-require 'devise/serializers/authenticatable'
+require 'devise/models/session_serializer'
 
 module Devise
   module Models
-    module SessionSerializer
-      # Hook to serialize user into session. Overwrite if you want.
-      def serialize_into_session(record)
-        [record.class, record.id]
-      end
-
-      # Hook to serialize user from session. Overwrite if you want.
-      def serialize_from_session(keys)
-        klass, id = keys
-        raise "#{self} cannot serialize from #{klass} session since it's not its ancestors" unless klass <= self
-        klass.find(:first, :conditions => { :id => id })
-      end
-    end
-
     # Authenticable Module, responsible for encrypting password and validating
     # authenticity of a user while signing in.
     #
@@ -67,13 +53,18 @@ module Devise
         password_digest(incoming_password) == encrypted_password
       end
 
+      # Checks if a resource is valid upon authentication.
+      def valid_for_authentication?(attributes)
+        valid_password?(attributes[:password])
+      end
+
       # Update record attributes when :old_password matches, otherwise returns
       # error on :old_password.
       def update_with_password(params={})
         if valid_password?(params[:old_password])
           update_attributes(params)
         else
-          errors.add(:old_password, :invalid)
+          self.class.add_error_on(self, :old_password, :invalid, false)
           false
         end
       end
@@ -93,7 +84,13 @@ module Devise
           return unless authentication_keys.all? { |k| attributes[k].present? }
           conditions = attributes.slice(*authentication_keys)
           resource = find_for_authentication(conditions)
-          valid_for_authentication(resource, attributes) if resource
+          if respond_to?(:valid_for_authentication)
+            ActiveSupport::Deprecation.warn "valid_for_authentication class method is deprecated. " <<
+              "Use valid_for_authentication? in the instance instead."
+            valid_for_authentication(resource, attributes)
+          elsif resource.try(:valid_for_authentication?, attributes)
+            resource
+          end
         end
 
         # Returns the class for the configured encryptor.
@@ -115,11 +112,6 @@ module Devise
         #
         def find_for_authentication(conditions)
           find(:first, :conditions => conditions)
-        end
-
-        # Contains the logic used in authentication. Overwritten by other devise modules.
-        def valid_for_authentication(resource, attributes)
-          resource if resource.valid_password?(attributes[:password])
         end
 
         Devise::Models.config(self, :pepper, :stretches, :encryptor, :authentication_keys)
