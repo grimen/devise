@@ -33,7 +33,7 @@ Devise.setup do |config|
   # time the user will be asked for credentials again.
   # config.timeout_in = 10.minutes
 
-  # Configure the e-mail address which will be shown in DeviseMailer.
+  # Configure the e-mail address which will be shown in Mailer.
   config.mailer_sender = "please-change-me-omg@yourapp.com"
 
   # Load and configure the ORM. Supports :active_record, :data_mapper and :mongo_mapper.

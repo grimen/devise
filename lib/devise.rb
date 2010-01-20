@@ -4,11 +4,18 @@ module Devise
   autoload :Schema, 'devise/schema'
   autoload :TestHelpers, 'devise/test_helpers'
 
+  autoload :Mailer, 'devise/mailer'
+
+  autoload :ConfirmationsController, 'devise/controllers/confirmations_controller'
+  autoload :PasswordsController, 'devise/controllers/passwords_controller'
+  autoload :SessionsController, 'devise/controllers/sessions_controller'
+  autoload :UnlocksController, 'devise/controllers/unlocks_controller'
+
   module Controllers
-    autoload :Common, 'devise/controllers/common'
-    autoload :Helpers, 'devise/controllers/helpers'
-    autoload :InternalHelpers, 'devise/controllers/internal_helpers'
-    autoload :UrlHelpers, 'devise/controllers/url_helpers'
+    autoload :Helpers, 'devise/controllers/helpers/helpers'
+    autoload :Common, 'devise/controllers/helpers/common'
+    autoload :InternalHelpers, 'devise/controllers/helpers/internal_helpers'
+    autoload :UrlHelpers, 'devise/controllers/helpers/url_helpers'
   end
 
   module Encryptors

@@ -40,7 +40,7 @@
   * More DataMapper compatibility (by github.com/lancecarlson)
 
 * deprecation
-  * Removed DeviseMailer.sender
+  * Removed Mailer.sender
 
 == 0.7.5
 
@@ -201,7 +201,7 @@
 == 0.4.0
 
 * deprecations
-  * Notifier is deprecated, use DeviseMailer instead. Remember to rename
+  * Notifier is deprecated, use Mailer instead. Remember to rename
     app/views/notifier to app/views/devise_mailer and I18n key from
     devise.notifier to devise.mailer
   * :authenticable calls are deprecated, use :authenticatable instead
