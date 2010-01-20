@@ -1,4 +1,5 @@
-require 'devise/models/cookie_serializer'
+require 'devise/strategies/rememberable'
+require 'devise/hooks/rememberable'
 
 module Devise
   module Models
@@ -32,7 +33,7 @@ module Devise
 
       def self.included(base)
         base.class_eval do
-          extend CookieSerializer
+          extend ClassMethods
 
           # Remember me option available in after_authentication hook.
           attr_accessor :remember_me
@@ -69,6 +70,22 @@ module Devise
       # Remember token expires at created time + remember_for configuration
       def remember_expires_at
         remember_created_at + self.class.remember_for
+      end
+
+      module ClassMethods
+        # Create the cookie key using the record id and remember_token
+        def serialize_into_cookie(record)
+          "#{record.id}::#{record.remember_token}"
+        end
+
+        # Recreate the user based on the stored cookie
+        def serialize_from_cookie(cookie)
+          record_id, record_token = cookie.split('::')
+          record = find(:first, :conditions => { :id => record_id }) if record_id
+          record if record.try(:valid_remember_token?, record_token)
+        end
+
+        Devise::Models.config(self, :remember_for)
       end
     end
   end

@@ -42,7 +42,8 @@ module Devise
     # Receives an object and find a scope for it. If a scope cannot be found,
     # raises an error. If a symbol is given, it's considered to be the scope.
     def self.find_scope!(duck)
-      if duck.is_a?(Symbol)
+      case duck
+      when String, Symbol
         duck
       else
         klass = duck.is_a?(Class) ? duck : duck.class
@@ -61,9 +62,8 @@ module Devise
       @as    = (options.delete(:as) || name).to_sym
       @klass = (options.delete(:class_name) || name.to_s.classify).to_s
       @name  = (options.delete(:scope) || name.to_s.singularize).to_sym
-      @path_names  = options.delete(:path_names) || {}
-      @path_prefix = options.delete(:path_prefix).to_s
-      @path_prefix << "/" unless @path_prefix[-1] == ?/
+      @path_names = options.delete(:path_names) || {}
+      @path_prefix = "/#{options.delete(:path_prefix)}/".squeeze("/")
       @route_options = options || {}
 
       setup_path_names
@@ -92,9 +92,9 @@ module Devise
       self.path_prefix.count("/")
     end
 
-    # Returns the raw path using path_prefix and as.
+    # Returns the raw path using the current relative_url_root, path_prefix and as.
     def raw_path
-      path_prefix + as.to_s
+      ActionController::Base.relative_url_root.to_s + path_prefix + as.to_s
     end
 
     # Returns the parsed path. If you need meta information in your path_prefix,
@@ -104,7 +104,7 @@ module Devise
     def parsed_path
       returning raw_path do |path|
         self.class.default_url_options.each do |key, value|
-          path.gsub!(key.inspect, value.to_s)
+          path.gsub!(key.inspect, value.to_param)
         end
       end
     end

@@ -5,8 +5,9 @@ module Devise
   autoload :TestHelpers, 'devise/test_helpers'
 
   module Controllers
-    autoload :Filters, 'devise/controllers/filters'
+    autoload :Common, 'devise/controllers/common'
     autoload :Helpers, 'devise/controllers/helpers'
+    autoload :InternalHelpers, 'devise/controllers/internal_helpers'
     autoload :UrlHelpers, 'devise/controllers/url_helpers'
   end
 
@@ -26,22 +27,22 @@ module Devise
     autoload :MongoMapper, 'devise/orm/mongo_mapper'
   end
 
-  ALL = [:authenticatable, :activatable, :confirmable, :recoverable, :rememberable,
-         :timeoutable, :trackable, :validatable]
+  ALL = [:authenticatable, :activatable, :confirmable, :recoverable,
+         :rememberable, :validatable, :trackable, :timeoutable, :lockable]
 
   # Maps controller names to devise modules
   CONTROLLERS = {
     :sessions => [:authenticatable],
     :passwords => [:recoverable],
-    :confirmations => [:confirmable]
+    :confirmations => [:confirmable],
+    :unlocks => [:lockable]
   }
 
-  STRATEGIES  = [:authenticatable]
-  SERIALIZERS = [:session, :cookie]
+  STRATEGIES  = [:rememberable, :authenticatable]
   TRUE_VALUES = [true, 1, '1', 't', 'T', 'true', 'TRUE']
 
   # Maps the messages types that are used in flash message.
-  FLASH_MESSAGES = [ :unauthenticated, :unconfirmed, :invalid, :timeout, :inactive ]
+  FLASH_MESSAGES = [ :unauthenticated, :unconfirmed, :invalid, :timeout, :inactive, :locked ]
 
   # Declare encryptors length which are used in migrations.
   ENCRYPTORS_LENGTH = {
@@ -86,15 +87,15 @@ module Devise
 
   # Store scopes mappings.
   mattr_accessor :mappings
-  @@mappings = {}
+  @@mappings = ActiveSupport::OrderedHash.new
 
   # Stores the chosen ORM.
   mattr_accessor :orm
   @@orm = :active_record
 
-  # Configure default options used in :all.
+  # TODO Remove
   mattr_accessor :all
-  @@all = Devise::ALL.dup
+  @@all = []
 
   # Tells if devise should apply the schema in ORMs where devise declaration
   # and schema belongs to the same class (as Datamapper and MongoMapper).
@@ -105,6 +106,19 @@ module Devise
   # turned off by default.
   mattr_accessor :scoped_views
   @@scoped_views = false
+
+  # Number of authentication tries before locking an account
+  mattr_accessor :maximum_attempts
+  @@maximum_attempts = 20
+
+  # Defines which strategy can be used to unlock an account.
+  # Values: :email, :time, :both
+  mattr_accessor :unlock_strategy
+  @@unlock_strategy = :both
+
+  # Time interval to unlock the account if :time is defined as unlock_strategy.
+  mattr_accessor :unlock_in
+  @@unlock_in = 1.hour
 
   # Tell when to use the default scope, if one cannot be found from routes.
   mattr_accessor :use_default_scope
@@ -149,10 +163,8 @@ module Devise
     # block.
     def configure_warden(config) #:nodoc:
       config.default_strategies *Devise::STRATEGIES
-      config.default_serializers *Devise::SERIALIZERS
       config.failure_app = Devise::FailureApp
       config.silence_missing_strategies!
-      config.silence_missing_serializers!
       config.default_scope = Devise.default_scope
 
       # If the user provided a warden hook, call it now.
@@ -177,9 +189,5 @@ rescue
   gem 'warden'
   require 'warden'
 end
-
-# Clear some Warden default configuration which will be overwritten
-Warden::Strategies.clear!
-Warden::Serializers.clear!
 
 require 'devise/rails'

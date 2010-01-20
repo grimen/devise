@@ -8,7 +8,7 @@ module ActionController::Routing
       load_routes_without_devise!
       return if Devise.mappings.empty?
 
-      ActionController::Base.send :include, Devise::Controllers::Filters
+      ActionController::Base.send :include, Devise::Controllers::Helpers
       ActionController::Base.send :include, Devise::Controllers::UrlHelpers
 
       ActionView::Base.send :include, Devise::Controllers::UrlHelpers
@@ -111,6 +111,10 @@ module ActionController::Routing
 
         def confirmable(routes, mapping)
           routes.resource :confirmation, :only => [:new, :create, :show], :as => mapping.path_names[:confirmation]
+        end
+
+        def lockable(routes, mapping)
+          routes.resource :unlock, :only => [:new, :create, :show], :as => mapping.path_names[:unlock]
         end
 
     end

@@ -1,5 +1,4 @@
 require 'devise/strategies/authenticatable'
-require 'devise/models/session_serializer'
 
 module Devise
   module Models
@@ -31,7 +30,6 @@ module Devise
       def self.included(base)
         base.class_eval do
           extend ClassMethods
-          extend SessionSerializer
 
           attr_reader :password, :old_password
           attr_accessor :password_confirmation
@@ -84,13 +82,7 @@ module Devise
           return unless authentication_keys.all? { |k| attributes[k].present? }
           conditions = attributes.slice(*authentication_keys)
           resource = find_for_authentication(conditions)
-          if respond_to?(:valid_for_authentication)
-            ActiveSupport::Deprecation.warn "valid_for_authentication class method is deprecated. " <<
-              "Use valid_for_authentication? in the instance instead."
-            valid_for_authentication(resource, attributes)
-          elsif resource.try(:valid_for_authentication?, attributes)
-            resource
-          end
+          resource if resource.try(:valid_for_authentication?, attributes)
         end
 
         # Returns the class for the configured encryptor.

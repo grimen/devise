@@ -1,5 +1,29 @@
+* deprecation
+  * devise :all is deprecated
+
+* enhancements
+  * Added devise lockable (by github/mhfs)
+  * Warden 0.9.0 compatibility
+  * Mongomapper 0.6.10 compatibility
+
+* bug fix
+  * Accept path prefix not starting with slash
+  * url helpers should rely on find_scope!
+
+== 0.8.2
+
+* enhancements
+  * Allow Devise.mailer_sender to be a proc (by github/grimen)
+
+* bug fix
+  * Fix bug with passenger, update is required to anyone deploying on passenger (by github/dvdpalm)
+
+== 0.8.1
+
 * enhancements
   * Move salt to encryptors
+  * Devise::Lockable
+  * Moved view links into partial and I18n'ed them
 
 * bug fix
   * Bcrypt generator was not being loaded neither setting the proper salt
