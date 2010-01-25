@@ -45,6 +45,8 @@ begin
     s.authors = ['José Valim', 'Carlos Antônio']
     s.files =  FileList["[A-Z]*", "{app,config,generators,lib}/**/*", "init.rb"]
     s.add_dependency("warden", "~> 0.9.0")
+    s.add_development_dependency("webrat")
+    s.add_development_dependency("mocha")
   end
 
   Jeweler::GemcutterTasks.new
