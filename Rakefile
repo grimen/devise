@@ -18,8 +18,7 @@ end
 
 desc 'Run Devise unit tests.'
 Rake::TestTask.new(:test) do |t|
-  t.libs << 'lib'
-  t.libs << 'test'
+  t.libs = ['lib', 'test']
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
 end
